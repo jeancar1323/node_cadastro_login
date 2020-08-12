@@ -53,7 +53,6 @@ typings/
 # Optional eslint cache
 .eslintcache
 
-.app/config/configPessoal.json
 
 # Microbundle cache
 .rpt2_cache/
@@ -104,3 +103,4 @@ dist
 
 # TernJS port file
 .tern-port
+src/config/configPessoal.json
