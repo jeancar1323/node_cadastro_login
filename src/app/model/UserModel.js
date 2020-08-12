@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs')
 
 const UserSchema = new mongoose.Schema({
 
-  
     name:{
       type: String,
       required: true,
@@ -17,6 +16,14 @@ const UserSchema = new mongoose.Schema({
     password:{
       type: String,
       required: true,
+      select: false,
+    },
+    passwordResetToken:{
+      type: String,
+      select: false,
+    },
+    passwordResetExpire:{
+      type: Date,
       select: false,
     },
     createdAt:{

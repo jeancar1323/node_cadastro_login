@@ -3,6 +3,9 @@ const User = require('../model/UserModel')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const authConfig = require('../../config/auth.json')
+const crypto = require('crypto')
+const mailer = require('../modules/mailer')
+const { waitForDebugger } = require('inspector')
 
 
 
@@ -64,6 +67,70 @@ class AuthController {
         })
       })
       .catch(error => res.status(400).send({ error }))
+  }
+
+  forgot_pass =  async (req,res)=>{
+    const {email} = req.body
+
+    await User.findOne({email})
+      .then(async user => {
+        if(!user)
+          return res.status(400).send({error: "Email não cadastrado"})
+        
+        const token = crypto.randomBytes(20).toString('hex')
+
+        const now = new Date()
+        now.setHours(now.getHours() + 1)
+        
+        await User.findByIdAndUpdate(user.id,{
+          '$set': {
+            passwordResetToken: token,
+            passwordResetExpire: now,
+          }
+        })
+
+        mailer.sendMail({
+          to: email,
+          from: 'jeancar@gisul.com',
+          template: 'auth/forgot_pass',
+          context: {token},
+        }, error =>{
+          if(error)
+           return res.status(400).send({error})
+          
+           return res.status(200).send({mensagem: "email enviado com sucesso"})
+      })
+
+          
+      })
+      .catch(error => res.status(400).send({error}))
+
+
+  }
+
+  resetPassword = async (req,res) =>{
+    const {email,token,password}  = req.body
+
+    await User.findOne({email}).select('+passwordResetToken passwordResetExpire')
+      .then( async user =>{
+        if(!user)
+          return res.status(400).send({error: "Usuario não existe"})
+        
+        if(token !== user.passwordResetToken)
+          return res.status(400).send({error: "Token invalido"})
+
+        if(new Date() > user.passwordResetExpire)
+          return res.status(400).send({error: "Token Expirado, crie um novo token"})
+        
+        user.password = password
+
+        await user.save();
+
+        res.status(200).send({error: "Senha resetada com sucesso"})
+
+      })
+      .catch(error => res.status(400).send({error}))
+
   }
 
 
