@@ -1,5 +1,5 @@
 const express = require('express')
-const User = require('../model/UserModel')
+const User = require('../model/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const authConfig = require('../../config/auth.json')
@@ -92,6 +92,7 @@ class AuthController {
         mailer.sendMail({
           to: email,
           from: 'jeancar@gisul.com',
+          subject: "Reset de senha",
           template: 'auth/forgot_pass',
           context: {token},
         }, error =>{

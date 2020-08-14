@@ -27,21 +27,35 @@ class ProjectController {
 
   create = async (req, res) => {
 
-    await Project.create({...req.body, user: req.userId })
-      .then(project  => res.status(201).send({error: false, project}) )
-      .catch(erro => res.status(400).send({ error: true, erro}))
+    const {title, description,tasks} = req.body
+
+    await Project.create({ title, description, user: req.userId })
+      .then(async project  => {
+       await Promise.all (tasks.map(async task =>{
+          const projectTask = new Task({...task, project: project.id})
+
+          await projectTask.save()
+          .then(task=>project.tasks.push(projectTask))
+        }))
+        
+        await project.save()
+        
+        return res.send({error:false, project})
+      })
+      .catch(erro => res.status(400).send({ error: true, erro, teste:"a" }))
+
   }
 
   update = async (req, res) => {
     if (!req.query.projectId)
       return res.status(400).send({ error: true, msg: "Faltando a query projetoId" })
 
-    await Project.findById(req.query.projectId)
+    await Project.findById(req.query.projectId), {new:true}
       .then(async project => {
         if (!project)
          return res.status(404).send({ error: true, msg: "Projeto não encontrado" })
 
-        await Project.findByIdAndUpdate(req.query.projectId, req.body,{new:true} )
+        await Project.findByIdAndUpdate(req.query.projectId, req.body)
           .populate('user')
           .then(project =>   res.send({ error: false, project }))
           .catch(erro => res.status(400).send({ error: true, erro }))
